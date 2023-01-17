@@ -1,4 +1,4 @@
-﻿// Copyright © 2023 Xpl0itR
+// Copyright © 2023 Xpl0itR
 // 
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,71 +6,60 @@
 
 #include "pch.h"
 
-BOOL Error(const LPWSTR message)
-{
-    MessageBox(NULL, message, L"VersionShim", MB_ICONHAND | MB_OK);
-    return FALSE;
-}
-
-BOOL OpenRead(LPCSTR lpFileName, HANDLE* fileHandle)
+BOOL OpenFileRead(const LPCSTR lpFileName, HANDLE* fileHandle)
 {
     OFSTRUCT ofStruct = { 0 };
     HFILE hFile = OpenFile(lpFileName, &ofStruct, OF_READ | OF_PROMPT);
 
-    *fileHandle = (HANDLE)hFile;
+    *fileHandle = (HANDLE)(INT_PTR)hFile;
     return hFile != HFILE_ERROR;
 }
 
-BOOL ReadUtf8File(const HANDLE fileHandle, LPCH* fileBuffer, DWORD* fileLength)
+BOOL ReadFileUtf8(const HANDLE fileHandle, LPCH* fileString, DWORD* fileLength)
 {
-    const DWORD fileLen = GetFileSize(fileHandle, NULL);
+    DWORD fileLen = GetFileSize(fileHandle, NULL);
     *fileLength = fileLen;
 
-    LPCH buffer = malloc(fileLen + 1);
+    HANDLE heap = GetProcessHeap();
+    LPCH buffer = HeapAlloc(heap, 0, fileLen + 1);
     if (!buffer)
         return FALSE;
 
     if (!ReadFile(fileHandle, buffer, fileLen, NULL, NULL))
     {
-        free(buffer);
+        HeapFree(heap, 0, buffer);
         return FALSE;
     }
 
     buffer[fileLen] = '\0';
-    *fileBuffer = buffer;
+    *fileString = buffer;
 
     return TRUE;
 }
 
-BOOL Utf8ToUtf16(LPCCH utf8String, const PZPWSTR utf16String, const int length)
+BOOL OpenReadFileUtf8(const LPCSTR lpFileName, LPCH* fileString, DWORD* fileLength)
 {
-    LPWSTR string = malloc(length * 2 + 2);
-    if (!string)
+    HANDLE hFile = NULL;
+    if (!OpenFileRead(lpFileName, &hFile))
         return FALSE;
 
-    if (!MultiByteToWideChar(CP_UTF8, 0, utf8String, length, string, length))
-    {
-        free(string);
-        return FALSE;
-    }
+    BOOL success = ReadFileUtf8(hFile, fileString, fileLength);
+    CloseHandle(hFile);
 
-    string[length] = L'\0';
-    *utf16String = string;
-
-    return TRUE;
+    return success;
 }
 
-int NextLine(const LPWSTR text)
+INT TerminateLineCrlf(const LPCH fileString)
 {
-    for (int i = 0; ; i++)
+    for (INT i = 0; ; i++)
     {
-        if (text[i]     == L'\r' &&
-            text[i + 1] == L'\n')
+        if (fileString[i]     == '\r' &&
+            fileString[i + 1] == '\n')
         {
-            text[i] = text[i + 1] = L'\0';
+            fileString[i] = fileString[i + 1] = '\0';
         }
 
-        if (text[i] == L'\0')
+        if (fileString[i] == '\0')
         {
             return i;
         }

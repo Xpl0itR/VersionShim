@@ -32,35 +32,26 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD fdwReason, LPCVOID lpRe
     if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
 
-    HANDLE hFile = NULL;
-    if (!OpenRead("Libraries.txt", &hFile))
-        return FALSE;
-
-    LPCH  fileBuf = NULL;
+    LPCH  fileStr = NULL;
     DWORD fileLen = 0;
-    BOOL  success = ReadUtf8File(hFile, &fileBuf, &fileLen);
-    CloseHandle(hFile);
-    if (!success)
-        return Error(L"Failed to read Libraries.txt");
-    if (fileLen > INT_MAX)
-        return Error(L"Libraries.txt was too large to read");
 
-    LPWSTR fileStr = NULL;
-    success = Utf8ToUtf16(fileBuf, &fileStr, (int)fileLen);
-    free(fileBuf);
-    if (!success)
-        return Error(L"Failed to read Libraries.txt as UTF-16");
-
-    LPWSTR end = fileStr + fileLen;
-    for (LPWSTR dllPath = fileStr; dllPath < end;)
+    if (!OpenReadFileUtf8("Libraries.txt", &fileStr, &fileLen))
     {
-        int numCharInVal = NextLine(dllPath);
-
-        LoadLibrary(dllPath);
-
-        dllPath += numCharInVal + 2;
+        MessageBoxA(NULL, "Failed to read Libraries.txt", PROJECT_NAME, ErrBoxType);
+        return TRUE;
     }
 
-    free(fileStr);
+    int charsInLine;
+    for (LPCH line = fileStr, fileEnd = fileStr + fileLen; line < fileEnd; line += charsInLine + 2)
+    {
+        charsInLine = TerminateLineCrlf(line);
+
+        if (!LoadLibraryA(line))
+        {
+            MessageBoxA(NULL, line, PROJECT_NAME" - Failed to load library", ErrBoxType);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, fileStr);
     return TRUE;
 }
