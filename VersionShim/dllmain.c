@@ -46,6 +46,9 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD fdwReason, LPCVOID lpRe
     {
         charsInLine = TerminateLineCrlf(line);
 
+        if (*line == '#')
+            continue;
+
         if (!LoadLibraryA(line))
         {
             MessageBoxA(NULL, line, PROJECT_NAME" - Failed to load library", ErrBoxType);
