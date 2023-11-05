@@ -6,22 +6,22 @@
 
 #include "pch.h"
 
-BOOL OpenFileRead(const LPCSTR lpFileName, HANDLE* fileHandle)
+static BOOL OpenFileRead(CONST LPCSTR lpFileName, CONST LPHANDLE fileHandle)
 {
-    OFSTRUCT ofStruct = { 0 };
+    OFSTRUCT ofStruct;
     HFILE hFile = OpenFile(lpFileName, &ofStruct, OF_READ | OF_PROMPT);
 
-    *fileHandle = (HANDLE)(INT_PTR)hFile;
+    *fileHandle = (HANDLE)(INT_PTR)hFile;  // NOLINT(performance-no-int-to-ptr)
     return hFile != HFILE_ERROR;
 }
 
-BOOL ReadFileUtf8(const HANDLE fileHandle, LPCH* fileString, DWORD* fileLength)
+static BOOL ReadFileUtf8(CONST HANDLE fileHandle, LPSTR* fileString, CONST LPDWORD fileLength)
 {
     DWORD fileLen = GetFileSize(fileHandle, NULL);
     *fileLength = fileLen;
 
     HANDLE heap = GetProcessHeap();
-    LPCH buffer = HeapAlloc(heap, 0, fileLen + 1);
+    LPSTR buffer = HeapAlloc(heap, 0, fileLen + 1);
     if (!buffer)
         return FALSE;
 
@@ -37,7 +37,7 @@ BOOL ReadFileUtf8(const HANDLE fileHandle, LPCH* fileString, DWORD* fileLength)
     return TRUE;
 }
 
-BOOL OpenReadFileUtf8(const LPCSTR lpFileName, LPCH* fileString, DWORD* fileLength)
+BOOL OpenReadFileUtf8(CONST LPCSTR lpFileName, LPSTR* fileString, CONST LPDWORD fileLength)
 {
     HANDLE hFile = NULL;
     if (!OpenFileRead(lpFileName, &hFile))
@@ -49,19 +49,45 @@ BOOL OpenReadFileUtf8(const LPCSTR lpFileName, LPCH* fileString, DWORD* fileLeng
     return success;
 }
 
-INT TerminateLineCrlf(const LPCH fileString)
+BOOL StrEndsWith(CONST LPSTR str, CONST LPSTR target)
 {
-    for (INT i = 0; ; i++)
-    {
-        if (fileString[i]     == '\r' &&
-            fileString[i + 1] == '\n')
-        {
-            fileString[i] = fileString[i + 1] = '\0';
-        }
+    DWORD strLen = lstrlenA(str), targetLen = lstrlenA(target);
 
-        if (fileString[i] == '\0')
+    if (strLen < targetLen)
+        return FALSE;
+
+    return lstrcmpA(str + strLen - targetLen, target) == 0;
+}
+
+LPSTR SkipBomUtf8(CONST LPSTR str)
+{
+    if (str[0] == (char)0xEF
+     && str[1] == (char)0xBB
+     && str[2] == (char)0xBF)
+    {
+        return str + 3;
+    }
+
+    return str;
+}
+
+INT TerminateLine(CONST LPSTR str)
+{
+    for (INT i = 0;; i++)
+    {
+        if (str[i] == '\0')
+            return i + 1;
+
+        if (str[i] == '\r' || str[i] == '\n')
         {
-            return i;
+            str[i] = '\0';
+
+            if (str[i + 1] == '\n')
+            {
+                str[++i] = '\0';
+            }
+
+            return i + 1;
         }
     }
 }
