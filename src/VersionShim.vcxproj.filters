@@ -15,21 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

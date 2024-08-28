@@ -1,10 +1,10 @@
 VersionShim
 ===========
-A Dynamic-Link Library which exports the same methods as version.dll (winver.h) in addition to chainloading additional user defined libraries.
+A Dynamic-Link Library which exports the same methods as version.dll (winver.h) and winhttp.dll in addition to chainloading additional user defined libraries.
 
 Usage
 -----
-Rename VersionShim.dll to `version.dll` and place it in the target process's search location,
+Rename VersionShim.dll to `version.dll` or `winhttp.dll` and place it in the target process's search location,
 then create a file named `libraries.txt` in the same directory and list the paths to all the libraries you'd like to load,
 each on a new line.
 

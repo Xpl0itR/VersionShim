@@ -23,5 +23,5 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: x64/Release/VersionShim.dll
+          files: bin/x64/Release/VersionShim.dll
           fail_on_unmatched_files: true
