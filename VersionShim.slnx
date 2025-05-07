@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Release" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".github/workflows/release.yml" />
+    <File Path=".gitignore" />
+    <File Path="gen/exports.py" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/VersionShim.vcxproj" Id="7d2e1375-bf0b-49ef-bba8-c134a347f1c7" />
+</Solution>
