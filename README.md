@@ -1,6 +1,6 @@
 VersionShim
 ===========
-A Dynamic-Link Library which exports the same methods as version.dll (winver.h) and winhttp.dll in addition to chainloading additional user defined libraries.
+A Dynamic-Link Library that exports the same methods as version.dll (winver.h) and winhttp.dll, in addition to chainloading additional user-defined libraries.
 
 Usage
 -----

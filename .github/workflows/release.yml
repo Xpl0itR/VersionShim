@@ -10,10 +10,10 @@ jobs:
     runs-on: 'windows-latest'
     steps:
       - name: Git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
@@ -21,7 +21,7 @@ jobs:
         run:  msbuild /m /p:Configuration=Release
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: bin/x64/Release/VersionShim.dll
           fail_on_unmatched_files: true

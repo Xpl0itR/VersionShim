@@ -1,4 +1,4 @@
-﻿// Copyright © 2023 Xpl0itR
+﻿// Copyright © 2023-2025 Xpl0itR
 // 
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,53 +9,51 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-UINT ErrBoxType = MB_ICONERROR | MB_TOPMOST;
+CONST UINT ErrBoxType = MB_ICONERROR | MB_TOPMOST;
 
-inline BOOL OpenFileRead(CONST LPCSTR lpFileName, CONST LPHANDLE fileHandle)
+inline BOOL OpenFileRead(_In_ LPCSTR fileName, _Outptr_ LPHANDLE lphFile)
 {
     OFSTRUCT ofStruct;
-    HFILE hFile = OpenFile(lpFileName, &ofStruct, OF_READ | OF_PROMPT);
+    HFILE hFile = OpenFile(fileName, &ofStruct, OF_READ | OF_PROMPT);
 
-    *fileHandle = (HANDLE)(INT_PTR)hFile;  // NOLINT(performance-no-int-to-ptr)
+    *lphFile = (HANDLE)(INT_PTR)hFile;  // NOLINT(performance-no-int-to-ptr)
     return hFile != HFILE_ERROR;
 }
 
-inline BOOL ReadFileUtf8(CONST HANDLE fileHandle, LPSTR* fileString, CONST LPDWORD fileLength)
+inline BOOL ReadFileUtf8(_In_ HANDLE hFile, _In_ HANDLE hHeap, _Outptr_ LPSTR* lpFileString, _Out_ LPDWORD lpFileLength)
 {
-    DWORD fileLen = GetFileSize(fileHandle, NULL);
-    *fileLength = fileLen;
+    DWORD fileLen = GetFileSize(hFile, NULL);
+    *lpFileLength = fileLen;
 
-    HANDLE heap = GetProcessHeap();
-    LPSTR buffer = HeapAlloc(heap, 0, fileLen + 1);
-    // ReSharper disable once CppPointerToIntegralConversion
+    LPSTR buffer = HeapAlloc(hHeap, 0, fileLen + 1);
     if (!buffer)
         return FALSE;
 
-    if (!ReadFile(fileHandle, buffer, fileLen, NULL, NULL))
+    if (!ReadFile(hFile, buffer, fileLen, NULL, NULL))
     {
-        HeapFree(heap, 0, buffer);
+        HeapFree(hHeap, 0, buffer);
         return FALSE;
     }
 
     buffer[fileLen] = '\0';
-    *fileString = buffer;
+    *lpFileString = buffer;
 
     return TRUE;
 }
 
-inline BOOL OpenReadFileUtf8(CONST LPCSTR lpFileName, LPSTR* fileString, CONST LPDWORD fileLength)
+inline BOOL OpenReadFileUtf8(_In_ LPCSTR fileName, _In_ HANDLE hHeap, _Outptr_ LPSTR* lpFileString, _Out_ LPDWORD lpFileLength)
 {
     HANDLE hFile = NULL;
-    if (!OpenFileRead(lpFileName, &hFile))
+    if (!OpenFileRead(fileName, &hFile))
         return FALSE;
 
-    BOOL success = ReadFileUtf8(hFile, fileString, fileLength);
+    BOOL success = ReadFileUtf8(hFile, hHeap, lpFileString, lpFileLength);
     CloseHandle(hFile);
 
     return success;
 }
 
-inline BOOL StrEndsWith(CONST LPSTR str, CONST LPSTR target)
+inline BOOL StrEndsWith(_In_ LPSTR str, _In_ LPSTR target)
 {
     DWORD strLen = lstrlenA(str), targetLen = lstrlenA(target);
 
@@ -65,11 +63,11 @@ inline BOOL StrEndsWith(CONST LPSTR str, CONST LPSTR target)
     return lstrcmpA(str + strLen - targetLen, target) == 0;
 }
 
-inline LPSTR SkipBomUtf8(CONST LPSTR str)
+inline LPSTR SkipBomUtf8(_In_ LPSTR str)
 {
     if (str[0] == (char)0xEF
-        && str[1] == (char)0xBB
-        && str[2] == (char)0xBF)
+     && str[1] == (char)0xBB
+     && str[2] == (char)0xBF)
     {
         return str + 3;
     }
@@ -77,7 +75,7 @@ inline LPSTR SkipBomUtf8(CONST LPSTR str)
     return str;
 }
 
-inline INT TerminateLine(CONST LPSTR str)
+inline INT TerminateLine(_Inout_ LPSTR str)
 {
     for (INT i = 0;; i++)
     {

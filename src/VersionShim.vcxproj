@@ -7,7 +7,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>16.0</VCProjectVersion>
+    <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7d2e1375-bf0b-49ef-bba8-c134a347f1c7}</ProjectGuid>
     <RootNamespace>VersionShim</RootNamespace>

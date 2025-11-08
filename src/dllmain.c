@@ -1,5 +1,5 @@
-// Copyright © 2023 Xpl0itR
-// 
+﻿// Copyright © 2023-2025 Xpl0itR
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -8,25 +8,23 @@
 #include "exports.h"
 #include "util.h"
 
-BOOL APIENTRY DllMain(CONST HMODULE hModule, CONST DWORD fdwReason, CONST LPVOID lpvReserved)
+VOID WINAPI SafeDllMain(_In_ ULONG_PTR _)
 {
-    if (fdwReason != DLL_PROCESS_ATTACH)
-        return TRUE;
+    HANDLE hHeap   = GetProcessHeap();
+    LPSTR  fileStr = NULL;
+    DWORD  fileLen = 0;
 
-    LPSTR fileStr = NULL;
-    DWORD fileLen = 0;
-
-    if (!OpenReadFileUtf8("libraries.txt", &fileStr, &fileLen))
+    if (!OpenReadFileUtf8("libraries.txt", hHeap, &fileStr, &fileLen))
     {
         MessageBoxA(NULL, "Failed to read libraries.txt", PROJECT_NAME, ErrBoxType);
-        return TRUE;
+        return;
     }
 
-    LPSTR callerPath[MAX_PATH + 1];
-    if (!GetModuleFileNameA(NULL, callerPath, MAX_PATH + 1))  // NOLINT(clang-diagnostic-incompatible-pointer-types)
+    CHAR callerPath[MAX_PATH + 1];
+    if (!GetModuleFileNameA(NULL, callerPath, MAX_PATH + 1))
     {
         MessageBoxA(NULL, "Failed to read caller path", PROJECT_NAME, ErrBoxType);
-        return TRUE;
+        return;
     }
 
     int read, hasTarget = FALSE, targetMatched = FALSE;
@@ -43,7 +41,7 @@ BOOL APIENTRY DllMain(CONST HMODULE hModule, CONST DWORD fdwReason, CONST LPVOID
             {
                 hasTarget = TRUE;
 
-                if (StrEndsWith(callerPath, line + 1))  // NOLINT(clang-diagnostic-incompatible-pointer-types)
+                if (StrEndsWith(callerPath, line + 1))
                 {
                     targetMatched = TRUE;
                 }
@@ -53,15 +51,23 @@ BOOL APIENTRY DllMain(CONST HMODULE hModule, CONST DWORD fdwReason, CONST LPVOID
         }
 
         if (hasTarget && !targetMatched)
-            return TRUE;
+            return;
 
-        // ReSharper disable once CppPointerToIntegralConversion
         if (!LoadLibraryA(line))
         {
             MessageBoxA(NULL, line, PROJECT_NAME" - Failed to load library", ErrBoxType);
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, fileStr);
+    HeapFree(hHeap, 0, fileStr);
+}
+
+BOOL APIENTRY DllMain(_In_ HMODULE hModule, _In_ DWORD fdwReason, _In_ LPVOID lpvReserved)
+{
+    DisableThreadLibraryCalls(hModule);
+
+    if (fdwReason == DLL_PROCESS_ATTACH)
+        QueueUserAPC(SafeDllMain, GetCurrentThread(), 0);
+
     return TRUE;
 }
